@@ -1,6 +1,10 @@
 import os
 import subprocess
 import wget
+import shutil
+import tensorflow as tf
+from object_detection.protos import pipeline_pb2
+from google.protobuf import text_format
 
 class DetectionModel:
 
@@ -13,25 +17,58 @@ class DetectionModel:
         self.train_dataset_images_path = "/media/katerina/DATA/mapillaryDataset/mapillary_train0/images"
         self.val_dataset_images_path = "/media/katerina/DATA/mapillaryDataset/mapillary_val/images"
 
-        # tf records could be some GBs for this large dataset
+        # tf records could have size some GBs for this large dataset
         self.tf_records_train_output = "/media/katerina/DATA/mapillaryDataset/annotations_tf_records/train.record"
         self.tf_records_val_output = "/media/katerina/DATA/mapillaryDataset/annotations_tf_records/val.record"
 
+        # name and download link to used model
+        self.detection_model_name = 'faster_rcnn_resnet50_v1_640x640_coco17_tpu-8'
+        self.detection_model_url = 'http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8.tar.gz'
+
 
     # download pretrained model from TensorFlow Detection Model Zoo
-    def download_pretrained_model(self, full_model_name, url):
-        if not os.path.exists(os.path.join('pretrained_model','faster_rcnn_resnet50_v1_640x640_coco17_tpu-8')):
-            filename = wget.download(url)
-            archive_name = full_model_name + '.tar.gz'
+    def download_pretrained_model(self):
+        if not os.path.exists(os.path.join('pretrained_model',self.detection_model_name)):
+            filename = wget.download(self.detection_model_url)
+            archive_name = self.detection_model_name + '.tar.gz'
             os.rename(archive_name, os.path.join('pretrained_model', archive_name))
             os.chdir('./pretrained_model')
             subprocess.call(['tar', '-zxvf', archive_name])
             os.chdir("..")
 
     def model_configuration(self):
-        self.download_pretrained_model('faster_rcnn_resnet50_v1_640x640_coco17_tpu-8', 'http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8.tar.gz')
+        self.download_pretrained_model()
         self.create_label_map()
         self.generate_tfrecords()
+        self.pipeline_configuration()
+
+    def pipeline_configuration(self):
+        shutil.copyfile(os.path.join('pretrained_model', self.detection_model_name, 'pipeline.config'), os.path.join('trained_model', self.detection_model_name, 'pipeline.config'))
+
+        model_pipeline_config = pipeline_pb2.TrainEvalPipelineConfig()
+        with tf.io.gfile.GFile(os.path.join('trained_model', self.detection_model_name, 'pipeline.config'), "r") as f:
+            text_format.Merge(f.read(), model_pipeline_config)
+
+        model_pipeline_config.model.faster_rcnn.num_classes = 5 # warning, complementary, other, information, regulatory
+        model_pipeline_config.train_config.batch_size = 4
+
+        model_latest_checkpoint = tf.train.latest_checkpoint(os.path.join('trained_model', self.detection_model_name))
+
+        # if our model of detection and classification has some checkpoint, load them and continue training, otherwise load initial checkpoint of downloaded model
+        if model_latest_checkpoint is None:
+            model_pipeline_config.train_config.fine_tune_checkpoint = os.path.join('pretrained_model', self.detection_model_name, 'checkpoint', 'ckpt-0')
+        else:
+            model_pipeline_config.train_config.fine_tune_checkpoint = model_latest_checkpoint
+
+        model_pipeline_config.train_config.fine_tune_checkpoint_type = "detection"
+        model_pipeline_config.train_input_reader.label_map_path = os.path.join('annotations', 'label_map.pbtxt')
+        model_pipeline_config.train_input_reader.tf_record_input_reader.input_path[:] = [self.tf_records_train_output]
+        model_pipeline_config.eval_input_reader[0].label_map_path = os.path.join('annotations', 'label_map.pbtxt')
+        model_pipeline_config.eval_input_reader[0].tf_record_input_reader.input_path[:] = [self.tf_records_val_output]
+
+        model_pipeline_config_text_format = text_format.MessageToString(model_pipeline_config)
+        with tf.io.gfile.GFile(os.path.join('trained_model', self.detection_model_name, 'pipeline.config'), "wb") as f:
+            f.write(model_pipeline_config_text_format)
 
 
     # generated TF records of huge Mapilary dataset could be quite large, so keep in mind it during writing to disc, it could take some time
@@ -43,7 +80,7 @@ class DetectionModel:
         generate_tfrecord_train_command = "python {} --csv_input={} --label_map_path={} --image_dir={} --output_path={}".format(os.path.join('scripts', 'generate_tfrecord.py'), os.path.join('annotations', 'train_annotations.csv'),os.path.join('annotations', 'label_map.pbtxt'),self.train_dataset_images_path,self.tf_records_train_output)
         generate_tfrecord_val_command = "python {} --csv_input={} --label_map_path={} --image_dir={} --output_path={}".format(os.path.join('scripts', 'generate_tfrecord.py'), os.path.join('annotations', 'val_annotations.csv'),os.path.join('annotations', 'label_map.pbtxt'),self.val_dataset_images_path,self.tf_records_val_output)
 
-        subprocess.call(generate_tfrecord_train_command, shell=True)
+        #subprocess.call(generate_tfrecord_train_command, shell=True)
         #subprocess.call(generate_tfrecord_val_command, shell=True)
 
     # create map of used labels - 5 original, because we dont need to train on all more than 300 labels
