@@ -1,3 +1,7 @@
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+
 '''
 Source:
 ***************************************************************************************
@@ -17,32 +21,40 @@ Usage:
   # Create test data:
   python generate_tfrecord.py --csv_input=data/test_labels.csv  --output_path=test.record
 """
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+
 
 import os
+import sys
 import io
 import pandas as pd
 import tensorflow as tf
 
 from PIL import Image
-from object_detection.utils import dataset_util
+from object_detection.utils import dataset_util, label_map_util
 from collections import namedtuple, OrderedDict
 
-flags = tf.app.flags
+flags = tf.compat.v1.flags
 flags.DEFINE_string('csv_input', '', 'Path to the CSV input')
 flags.DEFINE_string('output_path', '', 'Path to output TFRecord')
 flags.DEFINE_string('image_dir', '', 'Path to images')
+flags.DEFINE_string('label_map_path', '', 'Path to label map')
 FLAGS = flags.FLAGS
 
 
-# TO-DO replace this with label map
+# string classes are transformed into their id (1,2,3,4 or 5) based on label_map.pbtxt
 def class_text_to_int(row_label):
-    if row_label == 'raccoon':
-        return 1
-    else:
-        None
+    class_int = None
+    label_map = label_map_util.load_labelmap(FLAGS.label_map_path)
+    label_map_dict = label_map_util.get_label_map_dict(label_map)
+    
+    for key, value in label_map_dict.items():
+        if key == row_label:
+            class_int = value
+
+    if class_int == None:
+        sys.stderr.write("Error - Annotations has class not in label map: " + row_label + "\n")
+        exit(1)
+    return class_int
 
 
 def split(df, group):
@@ -52,7 +64,7 @@ def split(df, group):
 
 
 def create_tf_example(group, path):
-    with tf.gfile.GFile(os.path.join(path, '{}'.format(group.filename)), 'rb') as fid:
+    with tf.io.gfile.GFile(os.path.join(path, '{}'.format(group.filename)), 'rb') as fid:
         encoded_jpg = fid.read()
     encoded_jpg_io = io.BytesIO(encoded_jpg)
     image = Image.open(encoded_jpg_io)
@@ -93,7 +105,7 @@ def create_tf_example(group, path):
 
 
 def main(_):
-    writer = tf.python_io.TFRecordWriter(FLAGS.output_path)
+    writer = tf.io.TFRecordWriter(FLAGS.output_path)
     path = os.path.join(FLAGS.image_dir)
     examples = pd.read_csv(FLAGS.csv_input)
     grouped = split(examples, 'filename')
@@ -107,4 +119,4 @@ def main(_):
 
 
 if __name__ == '__main__':
-    tf.app.run()
+    tf.compat.v1.app.run()
