@@ -520,10 +520,10 @@ def edit_labels(original_label, split_warning_dict, split_complementary_dict, sp
 get_used_image_names("/media/katerina/DATA/mapillaryDataset/mapillary_train0/images", "/media/katerina/DATA/mapillaryDataset/mapillary_val/images", "/media/katerina/DATA/mapillaryDataset/mapillary_test/images")
 annotations_path = "/media/katerina/DATA/mapillaryDataset/mapillary_annotations/mtsd_v2_fully_annotated/annotations"
 
-remove_unused_annotations(annotations_path)
-train_annotations = open("train_annotations.csv","w+")
-test_annotations = open("test_annotations.csv","w+")
-val_annotations = open("val_annotations.csv","w+")
+#remove_unused_annotations(annotations_path)
+train_annotations = open("../annotations/train_annotations.csv","w+")
+test_annotations = open("../annotations/test_annotations.csv","w+")
+val_annotations = open("../annotations/val_annotations.csv","w+")
 
 # write header of annotation csvs
 train_annotations.write("filename,width,height,class,xmin,ymin,xmax,ymax\n")

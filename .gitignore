@@ -1,3 +1,4 @@
 POVa-project-env/*
 __pycache__/*
 pretrained_model/*
+models/*
