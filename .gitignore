@@ -3,3 +3,5 @@ __pycache__/*
 pretrained_model/*
 models/*
 trained_model/*
+data/*
+output_predict/*
