@@ -17,7 +17,7 @@ PATH_TO_MODEL_DIR="trained_model/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8"
 PATH_TO_CFG = PATH_TO_MODEL_DIR + "/pipeline.config"
 
 PATH_TO_CKPT = PATH_TO_MODEL_DIR #+ "/checkpoint"
-CHECKPOINT = "ckpt-15"
+CHECKPOINT = "ckpt-26"
 
 PATH_TO_LABELS = "annotations/label_map.pbtxt"
 
@@ -103,7 +103,7 @@ for image_path in IMAGE_PATHS:
             category_index,
             use_normalized_coordinates=True,
             max_boxes_to_draw=20,
-            min_score_thresh=.35,
+            min_score_thresh=.4,
             agnostic_mode=False)
 
     plt.figure()

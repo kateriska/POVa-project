@@ -8,7 +8,7 @@ from google.protobuf import text_format
 
 class DetectionModel:
 
-    def __init__(self, steps):
+    def __init__(self, steps, model):
         super().__init__()
 
         self.steps = steps
@@ -22,8 +22,14 @@ class DetectionModel:
         self.tf_records_val_output = "/media/katerina/DATA/mapillaryDataset/annotations_tf_records/val.record"
 
         # name and download link to used model
-        self.detection_model_name = 'faster_rcnn_resnet50_v1_640x640_coco17_tpu-8'
-        self.detection_model_url = 'http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8.tar.gz'
+        if model == "faster_rcnn":
+            self.detection_model_name = 'faster_rcnn_resnet50_v1_640x640_coco17_tpu-8'
+            self.detection_model_url = 'http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8.tar.gz'
+        elif model == "ssd":
+            self.detection_model_name = 'ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8'
+            self.detection_model_url = 'http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8.tar.gz'
+
+        self.model = model
 
 
     # download pretrained model from TensorFlow Detection Model Zoo
@@ -43,13 +49,18 @@ class DetectionModel:
         self.pipeline_configuration()
 
     def pipeline_configuration(self):
+        if not os.path.exists(os.path.join('trained_model',self.detection_model_name)):
+            os.mkdir(os.path.join('trained_model',self.detection_model_name))
         shutil.copyfile(os.path.join('pretrained_model', self.detection_model_name, 'pipeline.config'), os.path.join('trained_model', self.detection_model_name, 'pipeline.config'))
 
         model_pipeline_config = pipeline_pb2.TrainEvalPipelineConfig()
         with tf.io.gfile.GFile(os.path.join('trained_model', self.detection_model_name, 'pipeline.config'), "r") as f:
             text_format.Merge(f.read(), model_pipeline_config)
 
-        model_pipeline_config.model.faster_rcnn.num_classes = 5 # warning, complementary, other, information, regulatory
+        if self.model == "faster_rcnn":
+            model_pipeline_config.model.faster_rcnn.num_classes = 5 # warning, complementary, other, information, regulatory
+        elif self.model == "ssd":
+            model_pipeline_config.model.ssd.num_classes = 5 # warning, complementary, other, information, regulatory
         model_pipeline_config.train_config.batch_size = 4
 
         model_latest_checkpoint = tf.train.latest_checkpoint(os.path.join('trained_model', self.detection_model_name))
