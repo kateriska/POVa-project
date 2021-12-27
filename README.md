@@ -17,7 +17,7 @@ Create .gitignore folders hierarchy:  <br />
 `mkdir ./trained_model` - store of configured models for our task, training checkpoints and metrics for Tensorboard are also stored here in folder of each model type<br />
 `mkdir ./tf_records` - store of generated TF records  <br />
 `mkdir ./trained_model/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8`  <br />
-`mkdir ./trained_model/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8`  <br />
+`mkdir ./trained_model/ssd_mobilenet_v2_fpnlite_640x640_coco17_tpu-8`  <br />
 `mkdir ./mapillary_dataset` - for store Mapillary dataset <br />
 `mkdir ./data/predict` - for store dataset used for predictions <br />
 `mkdir ./data/predict/TestIJCNN2013` - folder with ppm images of TestIJCNN2013.zip (German dataset used for trained model prediction - `https://benchmark.ini.rub.de/gtsdb_dataset.html`) <br />
