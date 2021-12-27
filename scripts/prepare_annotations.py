@@ -7,6 +7,8 @@ import csv
 # additional script to filter unused Mapillary annotations (which are not in train0, val or test dataset) - will be helpful when transforming to csv files and then to TF records
 # and transform of json files to csv files of train, test or val dataset - they will be then transofrmed to TF records via https://github.com/datitran/raccoon_dataset/blob/master/generate_tfrecord.py
 
+# this script generated train_annotations for mtsd_fully_annotated_images.train.0.zip, val_annotations.csv for mtsd_fully_annotated_images.val.zip and test_annotations.csv for mtsd_fully_annotated_images.test.zip
+
 # dictionaries of classes for transform only to 5 origin classes - warning, information etc which will be used by our detection model
 split_warning_dict = {
     "warning--roadworks--g1": 0,
@@ -456,10 +458,10 @@ def remove_unused_annotations(annotations_path):
         file_substr = file.split('/')[-1]
         file_substr = file_substr[:len(file_substr)-5]
         if file_substr not in used_data:
-            print("Remove this annotation - we dont use this file")
-            #os.remove("/media/katerina/DATA/mapillaryDataset/mapillary_annotations/mtsd_v2_fully_annotated/annotations/" + file_substr + ".json")
+            print("Removing this annotation - we don't use this file")
+            os.remove("./mapillary_dataset/mapillary_annotations/mtsd_v2_fully_annotated/annotations/" + file_substr + ".json")
         else:
-            print("Keep annotation")
+            print("Keeping this annotation - file is in train, val or test dataset")
 
 # convert json to csv and each object is written to new line (see e.g. https://github.com/datitran/raccoon_dataset/blob/master/data/train_labels.csv)
 def json_to_csv(file, train_annotations, test_annotations, val_annotations):
@@ -515,10 +517,11 @@ def edit_labels(original_label, split_warning_dict, split_complementary_dict, sp
 
 
 
-# get path to images of train0, test and val dataset - these relative paths are here because I use different HDD disc for storing data than my SSD
+# get path to images of train0, test and val dataset
+get_used_image_names("./mapillary_dataset/mapillary_train0/images", "./mapillary_dataset/mapillary_val/images", "./mapillary_dataset/mapillary_test/images")
 
-get_used_image_names("/media/katerina/DATA/mapillaryDataset/mapillary_train0/images", "/media/katerina/DATA/mapillaryDataset/mapillary_val/images", "/media/katerina/DATA/mapillaryDataset/mapillary_test/images")
-annotations_path = "/media/katerina/DATA/mapillaryDataset/mapillary_annotations/mtsd_v2_fully_annotated/annotations"
+# get path to annotations - mtsd_fully_annotated_annotation.zip
+annotations_path = "./mapillary_dataset/mapillary_annotations/mtsd_v2_fully_annotated/annotations"
 
 #remove_unused_annotations(annotations_path)
 train_annotations = open("../annotations/train_annotations.csv","w+")

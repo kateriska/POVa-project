@@ -13,21 +13,21 @@ class DetectionModel:
 
         self.steps = steps
 
-        # these paths set because I use different disc for storing mapillary dataset, annotations and tf records
-        self.train_dataset_images_path = "/media/katerina/DATA/mapillaryDataset/mapillary_train0/images"
-        self.val_dataset_images_path = "/media/katerina/DATA/mapillaryDataset/mapillary_val/images"
+        # path to train0 and mapillary_val dataset images - mtsd_fully_annotated_images.train.0.zip and mtsd_fully_annotated_images.val.zip (https://www.mapillary.com/dataset/trafficsign)
+        self.train_dataset_images_path = "./mapillary_dataset/train0/images"
+        self.val_dataset_images_path = "./mapillary_dataset/mapillary_val/images"
 
         # tf records could have size some GBs for this large dataset
-        self.tf_records_train_output = "/media/katerina/DATA/mapillaryDataset/annotations_tf_records/train.record"
-        self.tf_records_val_output = "/media/katerina/DATA/mapillaryDataset/annotations_tf_records/val.record"
+        self.tf_records_train_output = "./tf_records/train.record"
+        self.tf_records_val_output = "./tf_records/val.record"
 
         # name and download link to used model
         if model == "faster_rcnn":
             self.detection_model_name = 'faster_rcnn_resnet50_v1_640x640_coco17_tpu-8'
             self.detection_model_url = 'http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8.tar.gz'
         elif model == "ssd":
-            self.detection_model_name = 'ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8'
-            self.detection_model_url = 'http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_mobilenet_v2_fpnlite_320x320_coco17_tpu-8.tar.gz'
+            self.detection_model_name = 'ssd_mobilenet_v2_fpnlite_640x640_coco17_tpu-8'
+            self.detection_model_url = 'http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_mobilenet_v2_fpnlite_640x640_coco17_tpu-8.tar.gz'
 
         self.model = model
 
@@ -47,6 +47,15 @@ class DetectionModel:
         self.create_label_map()
         self.generate_tfrecords()
         self.pipeline_configuration()
+    
+        print("Command for training:")
+        # python models/research/object_detection/model_main_tf2.py --model_dir=trained_model/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8 --pipeline_config_path=trained_model/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8/pipeline.config --num_train_steps=20000
+        train_command = "python {} --model_dir={} --pipeline_config_path={} --num_train_steps={}".format(os.path.join('models','research','object_detection','model_main_tf2.py'), os.path.join('trained_model', self.detection_model_name), os.path.join('trained_model', self.detection_model_name, 'pipeline.config'), self.steps)
+        print(train_command)
+
+        print("Command for launching Tensorboard for metrics:")
+        tensorboard_command = "tensorboard --logdir={}".format(os.path.join('trained_model', self.detection_model_name))
+        print(tensorboard_command)
 
     def pipeline_configuration(self):
         if not os.path.exists(os.path.join('trained_model',self.detection_model_name)):
@@ -68,10 +77,12 @@ class DetectionModel:
         # if our model of detection and classification has some checkpoint, load them and continue training, otherwise load initial checkpoint of downloaded model
         if model_latest_checkpoint is None:
             model_pipeline_config.train_config.fine_tune_checkpoint = os.path.join('pretrained_model', self.detection_model_name, 'checkpoint', 'ckpt-0')
+            model_pipeline_config.train_config.fine_tune_checkpoint_type = "detection"
         else:
+            # if we continue training fine_tune_checkpoint_type is "full" -  Restores the entire detection model, including the feature extractor, its classification backbone, and the prediction heads
             model_pipeline_config.train_config.fine_tune_checkpoint = model_latest_checkpoint
+            model_pipeline_config.train_config.fine_tune_checkpoint_type = "full"
 
-        model_pipeline_config.train_config.fine_tune_checkpoint_type = "detection"
         model_pipeline_config.train_input_reader.label_map_path = os.path.join('annotations', 'label_map.pbtxt')
         model_pipeline_config.train_input_reader.tf_record_input_reader.input_path[:] = [self.tf_records_train_output]
         model_pipeline_config.eval_input_reader[0].label_map_path = os.path.join('annotations', 'label_map.pbtxt')
@@ -90,7 +101,6 @@ class DetectionModel:
     def generate_tfrecords(self):
         generate_tfrecord_train_command = "python {} --csv_input={} --label_map_path={} --image_dir={} --output_path={}".format(os.path.join('scripts', 'generate_tfrecord.py'), os.path.join('annotations', 'train_annotations.csv'),os.path.join('annotations', 'label_map.pbtxt'),self.train_dataset_images_path,self.tf_records_train_output)
         generate_tfrecord_val_command = "python {} --csv_input={} --label_map_path={} --image_dir={} --output_path={}".format(os.path.join('scripts', 'generate_tfrecord.py'), os.path.join('annotations', 'val_annotations.csv'),os.path.join('annotations', 'label_map.pbtxt'),self.val_dataset_images_path,self.tf_records_val_output)
-
         #subprocess.call(generate_tfrecord_train_command, shell=True)
         #subprocess.call(generate_tfrecord_val_command, shell=True)
 
