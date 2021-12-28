@@ -5,7 +5,7 @@ import random
 
 # german dataset for test trained model because traffic signs are quite simmilar to Czech Republic and we dont have any huge Czech traffic signs dataset
 # https://sid.erda.dk/public/archives/ff17dc924eba88d5d01a807357d6614c/published-archive.html - TestIJCNN2013.zip
-german_test_dataset_path_ppm = "/media/katerina/DATA/Stazene/TestIJCNN2013/TestIJCNN2013Download"
+german_test_dataset_path_ppm = "../data/TestIJCNN2013/TestIJCNN2013Download"
 german_test_dataset_path_png = "../data/predict"
 
 converted_dataset_amount = 0.5 # I will only use half of this dataset (50 %) - 150 imgs to try to predict traffic signs - this is not important, you can convert whole 300 dataset to png and predict :D
