@@ -16,7 +16,7 @@ matplotlib.use('TkAgg')
 
 PATH_TO_RCNN_MODEL_DIR="trained_model/faster_rcnn_resnet50_v1_640x640_coco17_tpu-8"
 
-PATH_TO_SSD_MODEL_DIR= "" #TODO 
+PATH_TO_SSD_MODEL_DIR= "./trained_model/ssd_mobilenet_v2_fpnlite_640x640_coco17_tpu-8" 
 
 PATH_TO_LABELS = "annotations/label_map.pbtxt"
 
