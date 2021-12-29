@@ -1,7 +1,7 @@
 # POVa-project
-[Github repository](https://github.com/kateriska/POVa-project)
-[Colab file](https://colab.research.google.com/drive/1WhBFSG9x85ifHsHqoMQLUBon5PgPnh1_?usp=sharing)
-[Drive folder with TF records, trained models and results](https://drive.google.com/drive/folders/1d5bqZQbEn4IcX6OELtsTVnhcKqOzl7_M?usp=sharing)
+[Github repository](https://github.com/kateriska/POVa-project) <br />
+[Colab file](https://colab.research.google.com/drive/1WhBFSG9x85ifHsHqoMQLUBon5PgPnh1_?usp=sharing) <br />
+[Drive folder with TF records, trained models and results](https://drive.google.com/drive/folders/1d5bqZQbEn4IcX6OELtsTVnhcKqOzl7_M?usp=sharing) <br />
 ### Setup:
 
 Install virtual environment and activate:  <br />
